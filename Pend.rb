@@ -16,24 +16,79 @@
 # Insbesondere sollte es später möglich sein, einzelne Bestandteile der
 # Applikation auszuwechseln.
 
-require 'swing_dsl'
-require 'gentledb'
+
+# Model dependencies:
+require 'gentledb'    # data storage
+require 'csv'         # data format
+
+# View dependencies:
+require 'swing_dsl'   # user interface
+
+
+# Deal with csv module's crazyness - https://gist.github.com/2639448
+class CSV
+  def CSV.unparse array
+    CSV.generate do |csv|
+      array.each { |i| csv << i }
+    end
+  end
+end
 
 
 class TODOList < javax.swing.table.AbstractTableModel
   def initialize
-    # Load from GentleDB
+    super
+    @g = GentleDB::FS.new
+    _load_from @g
   end
 
   def close
-    # Store into GentleDB
+    # TODO: make sure this code gets called
+    _store_to @g
   end
+
+  def csv= csv_string
+    @data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
+  end
+
+  def csv
+    CSV.unparse @data
+  end
+
+  private
+
+  PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
+
+  def _load_from g
+    self.csv = g - g[PTR_ID]
+  end
+
+  def _store_to g
+    g[PTR_ID] = g + self.csv
+  end
+end
+
+
+class View
+  def initialize model
+    @model = model
+    observe @model
+  end
+
+  def observe model
+    # TODO: Observe model
+  end
+end
+
+
+class SwingView < View
 end
 
 
 class Pend
   def initialize
-    # Set up the application
+    @model = TODOList.new
+    @view = SwingView.new @model
   end
 end
 
