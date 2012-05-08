@@ -16,8 +16,25 @@
 # Insbesondere sollte es später möglich sein, einzelne Bestandteile der
 # Applikation auszuwechseln.
 
+require 'swing_dsl'
+require 'gentledb'
+
+
+class TODOList < javax.swing.table.AbstractTableModel
+  def initialize
+    # Load from GentleDB
+  end
+
+  def close
+    # Store into GentleDB
+  end
+end
+
 
 class Pend
+  def initialize
+    # Set up the application
+  end
 end
 
 
