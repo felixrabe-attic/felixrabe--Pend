@@ -55,6 +55,31 @@ class TODOList < javax.swing.table.AbstractTableModel
     CSV.unparse @data
   end
 
+  # TableModel interface
+
+  def getColumnName col
+    %w(Date Description Done)[col]
+  end
+
+  def getColumnCount ; 3 ; end
+
+  def getRowCount
+    @data.length
+  end
+
+  def getValueAt row, col
+    @data[row][col]
+  end
+
+  def isCellEditable row, col
+    true
+  end
+
+  def setValueAt value, row, col
+    @data[row][col] = value
+    fire_table_cell_updated row, col
+  end
+
   private
 
   PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
