@@ -85,6 +85,8 @@ class TODOList < javax.swing.table.AbstractTableModel
     fire_table_cell_updated row, col
   end
 
+  # Database access
+
   private
 
   PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
