@@ -18,11 +18,14 @@
 
 
 # Model dependencies:
-require 'gentledb'    # data storage
-require 'csv'         # data format
+require 'gentledb'    # data storage:   GentleDB
+require 'csv'         # data format:    CSV
 
 # View dependencies:
-require 'swing_dsl'   # user interface
+require 'swing_dsl'   # user interface: Swing
+
+# Internal dependencies:
+require 'ostruct'
 
 
 # Deal with csv module's crazyness - https://gist.github.com/2639448
@@ -59,6 +62,10 @@ class TODOList < javax.swing.table.AbstractTableModel
 
   def getColumnName col
     %w(Date Description Done)[col]
+  end
+
+  def getColumnClass col
+    col == 2 ? java.lang.Boolean.java_class : java.lang.String.java_class;
   end
 
   def getColumnCount ; 3 ; end
@@ -107,6 +114,26 @@ end
 
 
 class SwingView < View
+  def initialize model
+    @_ = OpenStruct.new
+    build_gui
+    super
+  end
+
+  def build_gui
+    _ = @_
+    SwingDSL::Frame "Pend" do
+      content do
+        scroll_pane do
+          _.table = table fills_viewport_height: true
+        end
+      end
+    end
+  end
+
+  def observe model
+    @_.table.model = model
+  end
 end
 
 
