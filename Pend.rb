@@ -39,31 +39,70 @@ class CSV
 end
 
 
-class DataStorage
+class CSVSerializer
+  def * thing
+    if thing.is_a? String
+      _string_to_data thing
+    else
+      _data_to_string *thing
+    end
+  end
+
+  private
+
+  def _string_to_data string
+    previous_id, csv_string = string.split("\n", 2)
+    data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
+    [previous_id, data]
+  end
+
+  def _data_to_string previous_id, data
+    "#{previous_id}\n#{CSV.unparse data}"
+  end
+end
+
+
+class GentleDBDataStorage
   PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
   EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   DEFAULT = "c6d963c99da92d0ca82ad59a30d7aea63cb85a5997b946ec3831022124b9be15"
 
   def initialize
     @gentledb = GentleDB::FS.new
+    @serializer = CSVSerializer.new
   end
 
   def load content_id=nil
-    content_id ||= @gentledb[PTR_ID]
-    content_id = DEFAULT if content_id == EMPTY  # nothing to load, load default
-    @gentledb[PTR_ID] = content_id
-    content = @gentledb - content_id
-    previous_id, csv_string = content.split("\n", 2)
-    data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
-    return previous_id, data
+    content_id = _determine content_id
+    _point_to content_id  # important for undo operation
+    @serializer * (@gentledb - content_id)
   end
 
   def save data
-    content_id = @gentledb[PTR_ID]
-    csv_string = CSV.unparse data
-    new_content_id = @gentledb + "#{content_id}\n#{csv_string}"
-    @gentledb[PTR_ID] = new_content_id
+    content_id = _from_pointer
+    new_content_id = _store @serializer * [content_id, data]
+    _point_to new_content_id
     return content_id
+  end
+
+  private
+
+  def _determine content_id
+    content_id ||= _from_pointer
+    content_id = DEFAULT if content_id == EMPTY  # nothing to load, load default
+    content_id
+  end
+
+  def _point_to content_id
+    @gentledb[PTR_ID] = content_id
+  end
+
+  def _from_pointer
+    @gentledb[PTR_ID]
+  end
+
+  def _store string
+    @gentledb + string
   end
 end
 
@@ -191,7 +230,7 @@ end
 
 
 if __FILE__ == $0
-  storage = DataStorage.new
+  storage = GentleDBDataStorage.new
   model = TODOListModel.new storage
   controller = TODOListController.new model
   view = SwingView.new model, controller
