@@ -71,18 +71,21 @@ class TODOListModel < javax.swing.table.AbstractTableModel
     super()
     @storage = storage
     @previous_id, @content_id, @data = @storage.load
-    add_table_model_listener do |e|
-      @previous_id, @content_id = @storage.save @content_id, @data
-    end
+  end
+
+  def save
+    @previous_id, @content_id = @storage.save @content_id, @data
   end
 
   def add
     @data << [(Time.new.to_date + 7).to_s, "", false]
+    save
     fire_table_rows_inserted @data.size-1, @data.size-1
   end
 
   def delete index
     @data[index..index] = []
+    save
     fire_table_rows_deleted index, index
   end
 
@@ -115,6 +118,7 @@ class TODOListModel < javax.swing.table.AbstractTableModel
 
   def setValueAt value, row, col
     @data[row][col] = value
+    save
     fire_table_cell_updated row, col
   end
 end
