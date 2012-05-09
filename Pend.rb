@@ -54,14 +54,15 @@ class DataStorage
     content = @gentledb - content_id
     previous_id, csv_string = content.split("\n", 2)
     data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
-    return previous_id, content_id, data
+    return previous_id, data
   end
 
-  def save content_id, data
+  def save data
+    content_id = @gentledb[PTR_ID]
     csv_string = CSV.unparse data
     new_content_id = @gentledb + "#{content_id}\n#{csv_string}"
     @gentledb[PTR_ID] = new_content_id
-    return content_id, new_content_id
+    return content_id
   end
 end
 
@@ -70,11 +71,11 @@ class TODOListModel < javax.swing.table.AbstractTableModel
   def initialize storage
     super()
     @storage = storage
-    @previous_id, @content_id, @data = @storage.load
+    @previous_id, @data = @storage.load
   end
 
   def save
-    @previous_id, @content_id = @storage.save @content_id, @data
+    @previous_id = @storage.save @data
   end
 
   def add
@@ -90,7 +91,7 @@ class TODOListModel < javax.swing.table.AbstractTableModel
   end
 
   def undo
-    @previous_id, @content_id, @data = @storage.load @previous_id
+    @previous_id, @data = @storage.load @previous_id
     fire_table_data_changed
   end
 
