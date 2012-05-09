@@ -43,11 +43,9 @@ class TODOList < javax.swing.table.AbstractTableModel
     super
     @g = GentleDB::FS.new
     _load_from @g
-  end
-
-  def close
-    # TODO: make sure this code gets called
-    _store_to @g
+    add_table_model_listener do |e|
+      _store_to @g
+    end
   end
 
   def csv= csv_string
