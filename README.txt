@@ -1,5 +1,7 @@
 Install JRuby, and run: [j]ruby Pend.rb
 
+Git repository: https://github.com/felixrabe/Pend
+
 
 # Homework by Felix Rabe, entered May 9, 2012.
 
