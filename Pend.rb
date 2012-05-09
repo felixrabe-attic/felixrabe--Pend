@@ -124,6 +124,16 @@ class SwingView < View
     _ = @_
     SwingDSL::Frame "Pend" do
       content do
+        to :north do
+          panel do
+            button "Add" do
+            end
+            button "Delete" do
+            end
+            button "Undo" do
+            end
+          end
+        end
         scroll_pane do
           _.table = table fills_viewport_height: true
         end
