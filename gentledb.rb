@@ -35,8 +35,8 @@ module GentleDB
     32.times.map { |i| "%02x" % rand(256) } .join
   end
 
-  def self.create_file_with_mode filename, mode
-    file = File.new filename, "wb"
+  def self.create_file_with_mode filename, mode, encoding=Encoding::ASCII_8BIT
+    file = File.new filename, "wb:#{encoding}"
     file.chmod mode
     if block_given?
       result = yield file
@@ -147,8 +147,20 @@ module GentleDB
   FS_DEFAULT_DIRECTORY = "~/.gentledb"
 
   class FS
-    def initialize directory=nil
-      directory ||= "~/.gentledb"
+    attr_reader :options
+
+    def initialize *args
+      # defaults
+      directory = "~/.gentledb"
+      @options = { encoding: "ascii-8bit" }
+
+      # arguments
+      directory = args.shift if args[0].is_a? String
+      @options = @options.merge args.pop if args[-1].is_a? Hash
+      @options[:encoding] = Encoding.find @options[:encoding]
+      raise GentleDBException, "Unrecognized arguments" if args.size > 0
+
+      # directory paths
       @directory = File.expand_path directory
       @content_directory = File.join @directory, "content_db"
       @pointer_directory = File.join @directory, "pointer_db"
@@ -224,7 +236,7 @@ module GentleDB
       if content_identifier
         GentleDB::validate_identifier content_identifier
         filename = _pointer_filename pointer_identifier, create_dir: true
-        GentleDB::create_file_with_mode filename, 0600 do |f|
+        GentleDB::create_file_with_mode filename, 0600, Encoding::ASCII_8BIT do |f|
           f.write content_identifier
         end
       else
@@ -262,7 +274,7 @@ module GentleDB
     class InFile
       def initialize db, content_identifier
         filename = db._content_filename content_identifier, create_dir: false
-        @content_file = File.open filename, "rb"
+        @content_file = File.open filename, "rb:#{db.options[:encoding]}"
       end
 
       def method_missing method, *args, &block
@@ -276,7 +288,7 @@ module GentleDB
         @hash = Digest::SHA256.new
         directory = @db.instance_variable_get :@tmp_directory
         @tmpfile_path = File.join directory, ~GentleDB
-        @tmpfile = GentleDB::create_file_with_mode @tmpfile_path, 0600
+        @tmpfile = GentleDB::create_file_with_mode @tmpfile_path, 0600, db.options[:encoding]
         @is_open = true
       end
 

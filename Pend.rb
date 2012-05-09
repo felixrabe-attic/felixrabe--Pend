@@ -70,7 +70,7 @@ class GentleDBDataStorage
   DEFAULT_DATA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n2012-05-09,Hand in homework,true\n"
 
   def initialize
-    @gentledb = GentleDB::FS.new
+    @gentledb = GentleDB::FS.new encoding: Encoding::UTF_8
     @serializer = CSVSerializer.new
   end
 
