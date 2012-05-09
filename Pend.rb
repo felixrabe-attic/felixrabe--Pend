@@ -25,6 +25,7 @@ require 'csv'         # data format:    CSV
 require 'swing_dsl'   # user interface: Swing
 
 # Internal dependencies:
+require 'date'
 require 'ostruct'
 
 
@@ -38,25 +39,57 @@ class CSV
 end
 
 
-class TODOList < javax.swing.table.AbstractTableModel
+class DataStorage
+  PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
+  EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  DEFAULT = "c6d963c99da92d0ca82ad59a30d7aea63cb85a5997b946ec3831022124b9be15"
+
   def initialize
-    super
-    @g = GentleDB::FS.new
-    _load_from @g
+    @gentledb = GentleDB::FS.new
+  end
+
+  def load content_id=nil
+    content_id ||= @gentledb[PTR_ID]
+    content_id = DEFAULT if content_id == EMPTY  # nothing to load, load default
+    content = @gentledb - content_id
+    previous_id, csv_string = content.split("\n", 2)
+    data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
+    return previous_id, content_id, data
+  end
+
+  def save content_id, data
+    csv_string = CSV.unparse data
+    new_content_id = @gentledb + "#{content_id}\n#{csv_string}"
+    @gentledb[PTR_ID] = new_content_id
+    return content_id, new_content_id
+  end
+end
+
+
+class TODOListModel < javax.swing.table.AbstractTableModel
+  def initialize storage
+    super()
+    @storage = storage
+    @previous_id, @content_id, @data = @storage.load
     add_table_model_listener do |e|
-      _store_to @g
+      @previous_id, @content_id = @storage.save @content_id, @data
     end
   end
 
-  def csv= csv_string
-    @data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
+  def add
+    @data << [(Time.new.to_date + 7).to_s, "", false]
+    fire_table_rows_inserted @data.size-1, @data.size-1
   end
 
-  def csv
-    CSV.unparse @data
+  def delete index
+    @data[index..index] = []
+    fire_table_rows_deleted index, index
   end
 
-  # TableModel interface
+  def undo
+    @previous_id, @content_id, @data = @storage.load @previous_id
+    fire_table_data_changed
+  end
 
   def getColumnName col
     %w(Date Description Done)[col]
@@ -84,40 +117,35 @@ class TODOList < javax.swing.table.AbstractTableModel
     @data[row][col] = value
     fire_table_cell_updated row, col
   end
-
-  # Database access
-
-  private
-
-  PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
-
-  def _load_from g
-    @previous, self.csv = (g - g[PTR_ID]).split("\n", 2)
-  end
-
-  def _store_to g
-    g[PTR_ID] = g + "#{g[PTR_ID]}\n#{self.csv}"
-  end
 end
 
 
-class View
+class TODOListController
   def initialize model
     @model = model
-    observe @model
   end
 
-  def observe model
-    # TODO: Observe model
+  def add
+    @model.add
+  end
+
+  def delete index
+    @model.delete index
+  end
+
+  def undo
+    @model.undo
   end
 end
 
 
-class SwingView < View
-  def initialize model
+class SwingView
+  def initialize model, controller
     @_ = OpenStruct.new
+    @model = model
+    @controller = controller
     build_gui
-    super
+    observe @model
   end
 
   def message msg
@@ -127,18 +155,19 @@ class SwingView < View
   def build_gui
     _ = @_
     view = self
+    controller = @controller
     _.frame = SwingDSL::Frame "Pend" do
       content do
         to :north do
           panel do
             button "Add" do
-              view.message "Not implemented"
+              controller.add
             end
             button "Delete" do
-              view.message "Not implemented"
+              _.table.selected_rows.each { |i| controller.delete i }
             end
             button "Undo" do
-              view.message "Not implemented"
+              controller.undo
             end
           end
         end
@@ -155,14 +184,9 @@ class SwingView < View
 end
 
 
-class Pend
-  def initialize
-    @model = TODOList.new
-    @view = SwingView.new @model
-  end
-end
-
-
 if __FILE__ == $0
-  Pend.new
+  storage = DataStorage.new
+  model = TODOListModel.new storage
+  controller = TODOListController.new model
+  view = SwingView.new model, controller
 end
