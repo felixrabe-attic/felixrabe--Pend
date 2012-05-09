@@ -51,6 +51,7 @@ class DataStorage
   def load content_id=nil
     content_id ||= @gentledb[PTR_ID]
     content_id = DEFAULT if content_id == EMPTY  # nothing to load, load default
+    @gentledb[PTR_ID] = content_id
     content = @gentledb - content_id
     previous_id, csv_string = content.split("\n", 2)
     data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
