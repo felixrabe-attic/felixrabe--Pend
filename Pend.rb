@@ -77,7 +77,7 @@ class GentleDBDataStorage
   def load content_id=nil
     content_id = _determine content_id
     _point_to content_id  # important for undo operation
-    @serializer * (@gentledb - content_id)
+    @serializer * _retrieve(content_id)
   end
 
   def save data
@@ -109,6 +109,10 @@ class GentleDBDataStorage
 
   def _store string
     @gentledb + string
+  end
+
+  def _retrieve content_id
+    @gentledb - content_id
   end
 end
 
