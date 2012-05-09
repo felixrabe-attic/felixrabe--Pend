@@ -18,11 +18,11 @@
 
 
 # Model dependencies:
-require 'gentledb'    # data storage:   GentleDB
-require 'csv'         # data format:    CSV
+require './gentledb'    # data storage:   GentleDB
+require 'csv'           # data format:    CSV
 
 # View dependencies:
-require 'swing_dsl'   # user interface: Swing
+require './swing_dsl'   # user interface: Swing
 
 # Internal dependencies:
 require 'date'
