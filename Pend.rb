@@ -120,17 +120,25 @@ class SwingView < View
     super
   end
 
+  def message msg
+    javax.swing.JOptionPane.showMessageDialog @_.frame.j, msg
+  end
+
   def build_gui
     _ = @_
-    SwingDSL::Frame "Pend" do
+    view = self
+    _.frame = SwingDSL::Frame "Pend" do
       content do
         to :north do
           panel do
             button "Add" do
+              view.message "Not implemented"
             end
             button "Delete" do
+              view.message "Not implemented"
             end
             button "Undo" do
+              view.message "Not implemented"
             end
           end
         end
