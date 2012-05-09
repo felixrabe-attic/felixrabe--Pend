@@ -65,7 +65,7 @@ end
 class GentleDBDataStorage
   PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
   EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  DEFAULT = "c6d963c99da92d0ca82ad59a30d7aea63cb85a5997b946ec3831022124b9be15"
+  DEFAULT_DATA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n2012-05-09,Hand in homework,true\n"
 
   def initialize
     @gentledb = GentleDB::FS.new
@@ -89,8 +89,12 @@ class GentleDBDataStorage
 
   def _determine content_id
     content_id ||= _from_pointer
-    content_id = DEFAULT if content_id == EMPTY  # nothing to load, load default
+    content_id = _default if content_id == EMPTY  # nothing to load, load default
     content_id
+  end
+
+  def _default
+    _store DEFAULT_DATA
   end
 
   def _point_to content_id
@@ -98,7 +102,7 @@ class GentleDBDataStorage
   end
 
   def _from_pointer
-    @gentledb[PTR_ID]
+    @gentledb[PTR_ID] rescue _default
   end
 
   def _store string
