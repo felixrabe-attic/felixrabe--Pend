@@ -1,6 +1,8 @@
 #!/usr/bin/env jruby
 # -*- coding: utf-8 -*-
 
+# Homework by Felix Rabe, entered May 9, 2012.
+
 # German homework description:
 
 # Erstellen Sie eine Applikation zur Pendenzenverwaltung.
