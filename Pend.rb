@@ -30,6 +30,8 @@ require './swing_dsl'   # user interface: Swing
 require 'date'
 require 'ostruct'
 
+def c s ; s.force_encoding Encoding::UTF_8 ; end  # JRuby workaround
+
 
 # Deal with csv module's crazyness - https://gist.github.com/2639448
 class CSV
@@ -54,7 +56,7 @@ class CSVSerializer
 
   def _string_to_data string
     previous_id, csv_string = string.split("\n", 2)
-    data = CSV.parse(csv_string).map { |i| [i[0], i[1], i[2] != "false"] }
+    data = CSV.parse(csv_string).map { |i| [c(i[0]), c(i[1]), i[2] != "false"] }
     [previous_id, data]
   end
 
@@ -70,7 +72,7 @@ class GentleDBDataStorage
   DEFAULT_DATA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n2012-05-09,Hand in homework,true\n"
 
   def initialize
-    @gentledb = GentleDB::FS.new encoding: Encoding::UTF_8
+    @gentledb = GentleDB::FS.new
     @serializer = CSVSerializer.new
   end
 
@@ -112,7 +114,7 @@ class GentleDBDataStorage
   end
 
   def _retrieve content_id
-    @gentledb - content_id
+    c @gentledb - content_id
   end
 end
 
