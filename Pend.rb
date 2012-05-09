@@ -90,11 +90,11 @@ class TODOList < javax.swing.table.AbstractTableModel
   PTR_ID = "eb221d123991ff2c85384203ee7d8c847d9fd5bb242660b721bf12ae4117a3b1"
 
   def _load_from g
-    self.csv = g - g[PTR_ID]
+    @previous, self.csv = (g - g[PTR_ID]).split("\n", 2)
   end
 
   def _store_to g
-    g[PTR_ID] = g + self.csv
+    g[PTR_ID] = g + "#{g[PTR_ID]}\n#{self.csv}"
   end
 end
 
